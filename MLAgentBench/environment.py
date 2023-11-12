@@ -66,7 +66,7 @@ class Environment:
 
             self._initialize_interactive_env() # set up work dir and log dir
 
-        self._action_infos =  {t.name: t for t in LOW_LEVEL_ACTIONS + HIGH_LEVEL_ACTIONS}
+        self._action_infos =  {t.name: t for t in LOW_LEVEL_ACTIONS + HIGH_LEVEL_ACTIONS} # these are all your actions, and just the names unfortunately -- Problem: I don't think this is good implementation for tooling
 
         if not args.interactive:
             del self._action_infos["Request Help"]
@@ -344,6 +344,7 @@ class Environment:
         return observation
 
     def save(self, curr_step):
+        print("SAVING IN ENVIRONMENT.PY!")
         """ Save the trace and snapshot of the workspace folder """     
         with open(os.path.join(self.log_dir, f"trace.json"), "w") as f:
             json.dump(self.trace, f, indent=4, cls=EnhancedJSONEncoder)

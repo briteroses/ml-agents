@@ -28,10 +28,10 @@ class EnhancedJSONEncoder(json.JSONEncoder):
         return super().default(o)
 
 def oom_error(path):
-    log = path.replace("trace.json", "../log")
-    main_log = path.replace("trace.json", "../agent_log/main_log")
+    log = path.replace("env_log/trace.json", "log")
+    main_log = path.replace("env_log/trace.json", "agent_log/main_log")
     message = "CUDA out of memory"
-    return (message in open(log, "r").read()) or (message in open(main_log, "r").read())
+    return (message in open(main_log, "r").read()) or (message in open(log, "r").read())
     
 
 def connection_error(path):
@@ -160,9 +160,13 @@ def run_eval(log_folder, benchmark_folder_name, eval_intermediate=False):
                             if os.path.exists(folder_path):
                                 print(folder_path)
                                 module = importlib.import_module(f'MLAgentBench.benchmarks.{benchmark_folder_name}.scripts.eval')
-                                eval_step_score = module.get_score(folder_path)
+                                if benchmark_folder_name == "house-price":
+                                    eval_step_score = module.get_score(folder_path, answer_file = f"MLAgentBench/benchmarks/{benchmark_folder_name}/scripts/answer.csv")
+                                else:
+                                    eval_step_score = module.get_score(folder_path)
                                 result.score.append(eval_step_score)
                         except Exception as e:
+                            print("Looks like there wasn't a submission file!")
                             print(e)
                             result.score.append(eval_step_score)
                     result.score_steps = list(subsampled_list)
@@ -171,7 +175,12 @@ def run_eval(log_folder, benchmark_folder_name, eval_intermediate=False):
                 try:
                     if os.path.exists(folder_path):
                         module = importlib.import_module(f'MLAgentBench.benchmarks.{benchmark_folder_name}.scripts.eval')
-                        eval_final_score = module.get_score(folder_path)
+
+                        # Adapting for house price where answer.csv is found not in the step_final_files folder
+                        if benchmark_folder_name == "house-price":
+                            eval_final_score = module.get_score(folder_path, answer_file = f"MLAgentBench/benchmarks/{benchmark_folder_name}/scripts/answer.csv")
+                        else:
+                            eval_final_score = module.get_score(folder_path)
                         result.score.append(eval_final_score)
                         result.final_score = eval_final_score
                         print(eval_final_score)
