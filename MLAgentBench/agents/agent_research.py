@@ -83,7 +83,7 @@ class ResearchAgent(Agent):
         ```
         {relevant_history}
         ```
-        Here are the exact several steps you have done most recently (up to 3 steps):
+        {"" if last_steps == 0 else f"Here are the exact {last_steps} steps you have done most recently:"}
         """
             else:
                 prompt += "\nNow let's start!\n\n"
