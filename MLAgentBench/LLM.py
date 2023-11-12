@@ -127,18 +127,31 @@ def complete_text_crfm(prompt=None, stop_sequences = None, model="openai/gpt-4-0
     return completion
 
 
-def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_tokens_to_sample=500, temperature=0.2, log_file=None, **kwargs):
+def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo-1106", max_tokens_to_sample=3000, temperature=0.2, log_file=None, json=False, **kwargs):
+    print("OpenAI model: ", model)
     """ Call the OpenAI API to complete a prompt."""
-    raw_request = {
-          "model": model,
-          "temperature": temperature,
-          "max_tokens": max_tokens_to_sample,
-          "stop": stop_sequences or None,  # API doesn't like empty list
-          **kwargs
-    }
+
+    if json and (model == "gpt-3.5-turbo-1106" or model == "gpt-4-1106-preview"):
+        raw_request = {
+            "model": model,
+            "response_format": { "type": "json_object" },
+            "temperature": temperature,
+            "max_tokens": max_tokens_to_sample,
+            "stop": stop_sequences or None,  # API doesn't like empty list
+            **kwargs
+        }
+    else:
+        raw_request = {
+            "model": model,
+            "temperature": temperature,
+            "max_tokens": max_tokens_to_sample,
+            "stop": stop_sequences or None,  # API doesn't like empty list
+            **kwargs
+        }
     if model.startswith("gpt-3.5") or model.startswith("gpt-4"):
         messages = [{"role": "user", "content": prompt}]
         response = openai.ChatCompletion.create(**{"messages": messages,**raw_request})
+        print("RESPONSE: ", response)
         completion = response["choices"][0]["message"]["content"]
     else:
         response = openai.Completion.create(**{"prompt": prompt,**raw_request})
@@ -147,7 +160,7 @@ def complete_text_openai(prompt, stop_sequences=[], model="gpt-3.5-turbo", max_t
         log_to_file(log_file, prompt, completion, model, max_tokens_to_sample)
     return completion
 
-def complete_text(prompt, log_file, model, **kwargs):
+def complete_text(prompt, log_file, model, json=False, **kwargs):
     """ Complete text using the specified model with appropriate API. """
     
     if model.startswith("claude"):
@@ -158,7 +171,7 @@ def complete_text(prompt, log_file, model, **kwargs):
         completion = complete_text_crfm(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
     else:
         # use OpenAI API
-        completion = complete_text_openai(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, **kwargs)
+        completion = complete_text_openai(prompt, stop_sequences=["Observation:"], log_file=log_file, model=model, json=json, **kwargs)
     return completion
 
 # specify fast models for summarization etc

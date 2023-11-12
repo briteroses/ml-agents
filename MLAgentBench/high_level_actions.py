@@ -77,6 +77,7 @@ EDIT_SCRIPT_MODEL = "claude-v1"
 EDIT_SCRIPT_MAX_TOKENS = 4000
 def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwargs):
     #TODO: handle long file editing
+    print("STARTING EDITING SCRIPT")
     try:
         content = read_file(script_name, work_dir = work_dir, **kwargs)
     except:
@@ -93,7 +94,9 @@ def edit_script(script_name, edit_instruction, save_name, work_dir = ".", **kwar
 
     """
 
+    print("\nEDIT SCRIPT PROMPT: \n", prompt)
     completion = complete_text(prompt, log_file=kwargs["log_file"], model=EDIT_SCRIPT_MODEL, max_tokens_to_sample=EDIT_SCRIPT_MAX_TOKENS)
+    print("\nEDIT SCRIPT COMPLETION: \n", completion)
 
     new_content = completion.split("```python")[1].split("```")[0].strip()
 
@@ -174,6 +177,8 @@ def inspect_script_lines( script_name, start_line_number, end_line_number, work_
     return f"Here are the lines (the file ends at line {len(lines)}):\n\n" + content
 
 def retrieval_from_research_log(current_plan, work_dir = ".", **kwargs):
+    print("Retrieving from research log")
+    MAX_RECENT_CHARS = 5000 # just from testing and wanting to make sure the research log errors aren't from too long of a prompt
 
     research_problem = kwargs["research_problem"]
 
@@ -185,7 +190,7 @@ Your current Research Plan and Status
     
 Your current research log:
 ```
-{research_log_content}
+{research_log_content[:-MAX_RECENT_CHARS]}
 ```
 Concisely summarize and list all relevant information from the research log that will be helpful for future step in this format:
 """
