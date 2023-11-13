@@ -36,6 +36,7 @@ def get_task_info(task):
 
 
 def prepare_task(benchmark_dir, python="python"):
+    print("Preparing task", benchmark_dir)
     """ Run prepare.py in the scripts folder of the benchmark if it exists and has not been run yet. """
     if os.path.exists(os.path.join(benchmark_dir, "scripts", "prepare.py")) and not os.path.exists(os.path.join(benchmark_dir, "scripts", "prepared")):
         print("Running prepare.py ...")
@@ -58,5 +59,7 @@ if __name__ == "__main__":
     else:
         python = "python"
     benchmark_name, _ = get_task_info(task)
+    print("1benchmark_name", benchmark_name, "benchmark_dir", benchmarks_dir)
     benchmark_dir = os.path.join(benchmarks_dir, benchmark_name)
+    print("benchmark_name", benchmark_name, "benchmark_dir", benchmark_dir)
     prepare_task(task, python=python)

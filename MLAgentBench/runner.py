@@ -14,8 +14,9 @@ try:
 except:
     print("Failed to import AutoGPTAgent; Make sure you have installed the autogpt dependencies if you want to use it.")
 
-
+# cls == class?
 def run(agent_cls, args):
+    print("Running the run function!", agent_cls, args)
     with Environment(args) as env:
 
         print("=====================================")
@@ -27,7 +28,7 @@ def run(agent_cls, args):
         print("Read only files: ", env.read_only_files, file=sys.stderr)
         print("=====================================")  
 
-        agent = agent_cls(args, env)
+        agent = agent_cls(args, env) # initial a ResearchAgent with the args and env
         final_message = agent.run(env)
         print("=====================================")
         print("Final message: ", final_message)
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--actions-add-to-prompt", type=str, nargs='+', default=[], help="actions to add")
     parser.add_argument("--no-retrieval", action="store_true", help="disable retrieval")
     parser.add_argument("--valid-format-entires", type=str, nargs='+', default=None, help="valid format entries")
-    parser.add_argument("--max-steps-in-context", type=int, default=1, help="max steps in context")
+    parser.add_argument("--max-steps-in-context", type=int, default=3, help="max steps in context")
     parser.add_argument("--max-observation-steps-in-context", type=int, default=3, help="max observation steps in context")
     parser.add_argument("--max-retries", type=int, default=5, help="max retries")
 
@@ -76,5 +77,5 @@ if __name__ == "__main__":
         # should not use these actions when there is no retrieval
         args.actions_remove_from_prompt.extend(["Retrieval from Research Log", "Append Summary to Research Log", "Reflection"])
     LLM.FAST_MODEL = args.fast_llm_name
-    run(getattr(sys.modules[__name__], args.agent_type), args)
-    
+    print(f"RUNNING:\n __name__: {__name__}, \nsys.modules[__name__]: {sys.modules[__name__]}, \nargs.agent_type: {args.agent_type}, \n getattr(sys.modules[__name__], args.agent_type), {getattr(sys.modules[__name__], args.agent_type)}")
+    run(getattr(sys.modules[__name__], args.agent_type), args) # run ResearchAgent(args)
