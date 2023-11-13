@@ -8,6 +8,18 @@ from .low_level_actions import read_file, write_file, append_file
 from .schema import ActionInfo, EnvException
 from .LLM import complete_text_fast, complete_text
 
+import re
+import json
+import time
+from duckduckgo_search import DDGS
+from itertools import islice
+from pprint import pprint
+from selenium.webdriver.chrome.webdriver import WebDriver as ChromeDriver
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
 
 def reflection( things_to_reflect_on, work_dir = ".", research_problem = "", **kwargs):
 
@@ -194,6 +206,78 @@ Concisely summarize and list all relevant information from the research log that
 
     return retrieval
 
+def search_the_web(search_query, number_of_results):
+    try:
+        number_of_results = int(number_of_results)
+    except:
+        raise EnvException("number_of_results must be an integer")
+
+    search_results = []
+    attempts = 0
+
+    while attempts < DUCKDUCKGO_MAX_ATTEMPTS:
+        if not search_query:
+            return json.dumps(search_results)
+
+        results = DDGS().text(search_query)
+        search_results = list([res["href"] for res in islice(results, number_of_results)])
+
+        if search_results:
+            break
+
+        time.sleep(1)
+        attempts += 1
+
+    test_search_results = [scrape_text_with_selenium_no_agent(url) for url in search_results]
+    json_results = json.dumps(test_search_results, ensure_ascii=False, indent=4)
+
+    if isinstance(json_results, list):
+        safe_message = json.dumps(
+            [result.encode("utf-8", "ignore").decode("utf-8") for result in results]
+        )
+    else:
+        safe_message = json_results.encode("utf-8", "ignore").decode("utf-8")
+    return safe_message
+    
+def scrape_text_with_selenium_no_agent(url: str) -> str:
+    driver = ChromeDriver()
+    driver.set_page_load_timeout(15)
+    driver.implicitly_wait(15)
+    print("set timeout!")
+
+    try:
+        driver.get(url)
+    except TimeoutException:
+        print('Page did not load within 15 seconds')
+        return "No information found"
+    except Exception as e:
+        print('An unexpected error occurred')
+        return "No information found"
+    except: 
+        print('there was an error')
+
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.TAG_NAME, "body"))
+    )
+
+    # Get the HTML content directly from the browser's DOM
+    page_source = driver.execute_script("return document.body.outerHTML;")
+    soup = BeautifulSoup(page_source, "html.parser")
+
+    for script in soup(['style', 'script', 'head', 'title', 'meta', '[document]', 'header', 'footer', 'iframe']):
+        script.extract()
+
+    text = soup.get_text()
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    text = "\n".join(chunk for chunk in chunks if chunk)
+
+    text = text[:300] #TODO shitty truncation processing...
+
+    driver.quit()
+
+    return text
+
 
 HIGH_LEVEL_ACTIONS =[
     ActionInfo(
@@ -268,4 +352,14 @@ HIGH_LEVEL_ACTIONS =[
         return_value="The observation will be a description of relevant content and lines in the research log.",
         function=retrieval_from_research_log
     ),
+    ActionInfo(
+        name="Search the Internet",
+        description="Use this to search the Internet for relevant information that may help with the task. You should provide a search query and number of results; the function will then perform a web search and return the text content of the top n results, where n is the number of results you specified.",
+        usage={
+            "search_query": "a short description of what you want to search the Internet for",
+            "number_of_results": "a small positive number, for the number of webpages to see results from via this Internet search"
+        },
+        return_value="The observation will be the text bodies of the webpages returned in the Internet search.",
+        function=search_the_web
+    )
 ]

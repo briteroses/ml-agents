@@ -63,7 +63,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-retrieval", action="store_true", help="disable retrieval")
     parser.add_argument("--valid-format-entires", type=str, nargs='+', default=None, help="valid format entries")
     parser.add_argument("--max-steps-in-context", type=int, default=1, help="max steps in context")
-    parser.add_argument("--max-observation-steps-in-context", type=int, default=0, help="max observation steps in context")
+    parser.add_argument("--max-observation-steps-in-context", type=int, default=3, help="max observation steps in context")
     parser.add_argument("--max-retries", type=int, default=5, help="max retries")
 
     # langchain configs
